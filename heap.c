@@ -4,9 +4,9 @@
  * Laboratório 2 da Aula 05 — Sistemas Operacionais · TADS/IFRN · 2026.1
  *
  * Compilar:  gcc -Wall -Wextra -O0 -o heap heap.c
- * Executar:  ./heap                  (padrão: toca a memória, teto de 2048 MiB)
- *            ./heap 2048 nao         (NÃO toca: só reserva endereço virtual)
- *            ./heap 120 sim liberar  (toca e libera cada bloco em seguida)
+ * Executar:  ./heap                       (padrão: toca, 2048 MiB, 1 s/bloco)
+ *            ./heap 400 nao 0             (NÃO toca; sem pausa entre blocos)
+ *            ./heap 120 sim liberar 0     (toca e libera; sem pausa)
  *
  * O segundo argumento é o que faz este programa valer a pena. Com "nao", o
  * programa só chama malloc() e nunca escreve no bloco: VmSize dispara e VmRSS
@@ -47,6 +47,7 @@ int main(int argc, char *argv[])
 	long teto = (argc > 1) ? atol(argv[1]) : 2048;          /* MiB */
 	int tocar = !(argc > 2 && strcmp(argv[2], "nao") == 0);
 	int liberar = (argc > 3 && strcmp(argv[3], "liberar") == 0);
+	unsigned pausa = (argc > 4) ? (unsigned)atoi(argv[4]) : 1; /* segundos */
 
 	if (teto < 1)    teto = 1;
 	if (teto > 8192) teto = 8192;      /* trava de segurança */
@@ -64,7 +65,8 @@ int main(int argc, char *argv[])
 
 	for (long i = 1; i <= teto; i++) {
 		char *bloco = malloc(MIB);      /* ❶ pede 1 MiB ao alocador */
-		sleep(1);
+		if (pausa > 0)
+			sleep(pausa);            /* permite acompanhar /proc em outro terminal */
 
 		if (!bloco) {
 			/* ❷ malloc devolveu NULL: o pedido foi RECUSADO. */
